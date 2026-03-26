@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M'lab Groceries</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #F5F0E6;
+      --surface: #FFFDF8;
+      --surface-hover: #FFF9EF;
+      --surface-selected: #EFF6F1;
+      --primary: #2D6A4F;
+      --primary-hover: #235740;
+      --primary-light: #D4E8DB;
+      --accent: #C0956C;
+      --accent-light: #F5EDE3;
+      --danger: #B84233;
+      --danger-light: #FDF0EE;
+      --text: #2A2522;
+      --text-secondary: #6E645C;
+      --text-muted: #A89E94;
+      --border: #DED5C8;
+      --border-light: #EDE6DA;
+      --shadow-sm: 0 1px 2px rgba(42,37,34,0.05);
+      --shadow-md: 0 2px 8px rgba(42,37,34,0.08);
+      --shadow-lg: 0 4px 16px rgba(42,37,34,0.1);
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: 'Figtree', -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 30%, rgba(192,149,108,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 70%, rgba(45,106,79,0.05) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 20px 160px;
+    }
+
+    /* ── Header ────────────────────────────── */
+
+    header {
+      margin-bottom: 36px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    header h1 {
+      font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      font-weight: 700;
+      font-size: 3rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    /* ── Add bar ───────────────────────────── */
+
+    .add-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.08s forwards;
+    }
+
+    .add-bar input {
+      flex: 1;
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .add-bar input::placeholder { color: var(--text-muted); }
+
+    .add-bar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(192,149,108,0.15);
+    }
+
+    .add-bar input.valid {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+    }
+
+    .add-bar input.invalid {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(184,66,51,0.1);
+    }
+
+    .add-bar button {
+      width: 50px;
+      height: 50px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 300;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .add-bar button:hover { background: var(--primary-hover); }
+    .add-bar button:active { transform: scale(0.95); }
+
+    /* ── Toolbar ───────────────────────────── */
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding: 0 4px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.14s forwards;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toolbar-left label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-count {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tool-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-light);
+    }
+
+    .tool-btn svg { flex-shrink: 0; }
+
+    /* ── Custom checkbox ───────────────────── */
+
+    .chk {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .chk input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      z-index: 1;
+      margin: 0;
+    }
+
+    .chk-box {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chk-box svg {
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s;
+      stroke: #fff;
+    }
+
+    .chk input:checked + .chk-box {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .chk input:checked + .chk-box svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ── Item cards ────────────────────────── */
+
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .item-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      animation: slideIn 0.3s ease;
+    }
+
+    .item-card:hover {
+      border-color: var(--border);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .item-card.selected {
+      background: var(--surface-selected);
+      border-color: var(--primary-light);
+    }
+
+    .item-card.staple {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--surface) 0%, var(--accent-light) 100%);
+    }
+
+    .item-card.staple:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 12px rgba(192,149,108,0.2);
+    }
+
+    .item-card.duplicate-flash {
+      animation: flash 0.6s ease;
+    }
+
+    .item-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .item-thumb[src=""] { display: none; }
+
+    .item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.3;
+      outline: none;
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin: -1px -4px;
+      transition: background 0.15s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-name:hover { background: rgba(0,0,0,0.03); }
+    .item-name:focus { background: rgba(192,149,108,0.1); }
+
+    .item-name.unnamed:empty::before {
+      content: attr(data-placeholder);
+      color: var(--text-muted);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 3px;
+    }
+
+    .item-asin {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      letter-spacing: 0.03em;
+    }
+
+    .item-link {
+      font-size: 0.78rem;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+
+    .item-link:hover { color: var(--primary); }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Quantity stepper ──────────────────── */
+
+    .qty {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .qty button {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, color 0.1s;
+      font-weight: 500;
+    }
+
+    .qty button:hover {
+      background: var(--border-light);
+      color: var(--text);
+    }
+
+    .qty span {
+      width: 26px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .qty span.bump { animation: bump 0.2s ease; }
+
+    /* ── Staple button ────────────────────── */
+
+    .staple-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .staple-btn:hover {
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .staple-btn.active {
+      color: var(--accent);
+    }
+
+    /* ── Delete button ─────────────────────── */
+
+    .del-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .del-btn:hover {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    /* ── Store section headers ────────────── */
+
+    .store-section {
+      margin-top: 20px;
+      margin-bottom: 10px;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .store-section:first-child { margin-top: 0; }
+
+    .store-section h3 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--text);
+    }
+
+    .store-section .store-count {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .store-section::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-light);
+    }
+
+    /* ── Cart button ───────────────────────── */
+
+    .cart-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 20px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      background: linear-gradient(to top, var(--bg) 60%, transparent);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .cart-bar.visible {
+      pointer-events: auto;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .cart-btn {
+      width: 100%;
+      max-width: 600px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: var(--radius-lg);
+      background: var(--primary);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(45,106,79,0.3);
+      letter-spacing: 0.01em;
+    }
+
+    .cart-btn:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 6px 24px rgba(45,106,79,0.35);
+    }
+
+    .cart-btn:active { transform: scale(0.98); }
+
+    /* ── Bookmarklet setup ─────────────────── */
+
+    .setup-banner {
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      background: var(--accent-light);
+      border: 1.5px dashed var(--accent);
+      border-radius: var(--radius);
+      text-align: center;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.2s forwards;
+    }
+
+    .setup-banner p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .setup-banner p strong { color: var(--text); }
+
+    .bookmarklet-link {
+      display: inline-block;
+      padding: 10px 24px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: grab;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: var(--shadow-md);
+    }
+
+    .bookmarklet-link:hover { background: var(--primary-hover); }
+    .bookmarklet-link:active { cursor: grabbing; transform: scale(0.97); }
+
+    .setup-dismiss {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      text-decoration: underline;
+      font-family: inherit;
+    }
+
+    /* ── Empty state ───────────────────────── */
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      display: none;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .empty-state h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 320px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .empty-state .hint {
+      margin-top: 20px;
+      padding: 14px 20px;
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: inline-block;
+    }
+
+    .empty-state .hint code {
+      background: var(--accent-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    /* ── Toast ─────────────────────────────── */
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 20;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Animations ────────────────────────── */
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bump {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+
+    @keyframes flash {
+      0%, 100% { background: var(--surface); }
+      30% { background: #FFF3CD; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+
+    .shake { animation: shake 0.35s ease; }
+
+    /* ── Responsive ────────────────────────── */
+
+    @media (max-width: 500px) {
+      .app { padding: 32px 16px 160px; }
+      header h1 { font-size: 2.4rem; }
+      .item-card { gap: 10px; padding: 12px 14px; }
+      .item-actions { gap: 4px; }
+      .tool-btn span { display: none; }
+      .toolbar-right { gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>M'lab Groceries</h1>
+      <p>Whole Foods shopping list</p>
+    </header>
+
+    <div class="add-bar">
+      <input type="text" id="addInput" placeholder="Paste an Amazon link or ASIN..." autocomplete="off" spellcheck="false" autofocus>
+      <button id="addBtn" title="Add item">+</button>
+    </div>
+
+
+    <div class="toolbar" id="toolbar">
+      <div class="toolbar-left">
+        <label>
+          <span class="chk">
+            <input type="checkbox" id="selectAll">
+            <span class="chk-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </span>
+          <span>Select all</span>
+        </label>
+        <button class="tool-btn" id="selectStarred">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Select starred</span>
+        </button>
+        <span class="item-count" id="itemCount"></span>
+      </div>
+      <div class="toolbar-right">
+        <button class="tool-btn" id="fetchNamesBtn" title="Fetch names &amp; images from Amazon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M9 9h6"/><path d="M9 13h4"/></svg>
+          <span>Sync</span>
+        </button>
+        <button class="tool-btn" id="saveBtn" title="Save groceries.json">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="setup-banner" id="setupBanner">
+      <p><strong>One-time setup:</strong> Drag this button to your bookmarks bar.</p>
+      <a class="bookmarklet-link" id="bookmarkletLink" href="#">Add Groceries</a>
+      <button class="setup-dismiss" id="setupDismiss">Got it, hide this</button>
+    </div>
+
+    <div class="item-list" id="itemList"></div>
+
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">&#127834;</div>
+      <h2>Nothing here yet</h2>
+      <p>Paste an Amazon product link or ASIN code above to start building your list.</p>
+      <div class="hint">
+        Try pasting a URL like <code>amazon.com/dp/B078HJZR4G</code><br>
+        or just the ASIN: <code>B078HJZR4G</code>
+      </div>
+    </div>
+
+    <div class="cart-bar" id="cartBar"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'mlab-groceries';
+    let items = [];
+
+    const STORES = { fresh: 'Amazon Fresh', wholefoods: 'Whole Foods' };
+
+    // Cached DOM refs (set once in init)
+    let $list, $empty, $toolbar, $cartBar, $selectAll, $countEl, $toast;
+
+    // ── ASIN / URL helpers ────────────────────
+
+    function isOrderURL(input) {
+      return /amazon\.[^/]+\/.*order-details/i.test(input.trim());
+    }
+
+    function importFromOrder(url) {
+      const orderUrl = url.trim() + (url.includes('#') ? '&' : '#') + 'mlab-import';
+      window.open(orderUrl, '_blank');
+      toast('Opened order page — click your "Add Groceries" bookmark!', 4000);
+    }
+
+    function receiveImport(data) {
+      if (!data || !data.items || !data.items.length) return;
+      let added = 0;
+      for (const entry of data.items) {
+        const asin = (entry.asin || '').toUpperCase();
+        if (asin.length === 10 && !items.some(i => i.asin === asin)) {
+          items.unshift({ id: uid(), asin, name: entry.name || asin, quantity: 1, checked: false, store: 'wholefoods', image: entry.image || '' });
+          added++;
+        }
+      }
+      if (added) { save(); render(); toast(`Imported ${added} item${added !== 1 ? 's' : ''} from order`); }
+      else { toast('No new items found in order'); }
+    }
+
+    function extractASIN(input) {
+      if (!input) return null;
+      input = input.trim();
+      const urlMatch = input.match(/(?:\/dp\/|\/product\/|\/gp\/product\/)([A-Z0-9]{10})/i);
+      if (urlMatch) return urlMatch[1].toUpperCase();
+      const raw = input.match(/^[A-Z0-9]{10}$/i);
+      if (raw) return input.toUpperCase();
+      return null;
+    }
+
+    function extractNameFromURL(input) {
+      try {
+        const match = input.match(/amazon\.[^/]+\/([^/]+)\/dp\//i);
+        if (match && match[1].length > 2) {
+          return match[1]
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase())
+            .substring(0, 80);
+        }
+      } catch {}
+      return null;
+    }
+
+    // ── Storage ───────────────────────────────
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      const data = {
+        name: "M'lab Groceries",
+        items: items.map(({ asin, name, quantity, store, staple, image }) => {
+          const o = { asin, name, quantity, store };
+          if (staple) o.staple = true;
+          if (image) o.image = image;
+          return o;
+        })
+      };
+      fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data, null, 2) }).catch(() => {});
+    }
+
+    function load() {
+      try {
+        const d = localStorage.getItem(STORAGE_KEY);
+        return d ? JSON.parse(d) : [];
+      } catch { return []; }
+    }
+
+    // ── CRUD ──────────────────────────────────
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+    }
+
+    function addItem(input) {
+      const asin = extractASIN(input);
+      if (!asin) return 'invalid';
+
+      const dup = items.find(i => i.asin === asin);
+      if (dup) return { duplicate: dup.id };
+
+      const name = extractNameFromURL(input) || asin;
+      items.unshift({ id: uid(), asin, name, quantity: 1, checked: false, store: 'wholefoods' });
+      save();
+      render();
+      return 'ok';
+    }
+
+    function removeItem(id) {
+      items = items.filter(i => i.id !== id);
+      save();
+      render();
+    }
+
+    function updateChrome() {
+      const selectedCount = items.filter(i => i.checked).length;
+      $cartBar.classList.toggle('visible', selectedCount > 0);
+      $selectAll.checked = items.length > 0 && items.every(i => i.checked);
+
+      const groups = {};
+      for (const item of items) {
+        const s = item.store || 'fresh';
+        (groups[s] = groups[s] || []).push(item);
+      }
+      let cartHtml = '';
+      for (const store of Object.keys(groups)) {
+        const checked = groups[store].filter(i => i.checked);
+        if (checked.length) {
+          cartHtml += `<button class="cart-btn" data-cart-store="${store}">Add ${checked.length} ${STORES[store] || store} item${checked.length !== 1 ? 's' : ''} to Cart</button>`;
+        }
+      }
+      $cartBar.innerHTML = cartHtml;
+    }
+
+    function toggleItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.checked = !item.checked;
+      save();
+
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card) {
+        card.classList.toggle('selected', item.checked);
+        const cb = card.querySelector('[data-toggle]');
+        if (cb) cb.checked = item.checked;
+      }
+      updateChrome();
+    }
+
+    function setQuantity(id, delta) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.quantity = Math.max(1, item.quantity + delta);
+      save();
+
+      const el = document.querySelector(`[data-id="${id}"] .qty span`);
+      if (el) {
+        el.textContent = item.quantity;
+        el.classList.remove('bump');
+        void el.offsetWidth;
+        el.classList.add('bump');
+      }
+    }
+
+    function setName(id, name) {
+      const item = items.find(i => i.id === id);
+      if (!item || !name.trim()) return;
+      item.name = name.trim();
+      save();
+    }
+
+    function toggleStaple(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.staple = !item.staple;
+      save();
+      render();
+    }
+
+    function toggleAll(checked) {
+      items.forEach(i => i.checked = checked);
+      save();
+      render();
+    }
+
+    // ── Cart ──────────────────────────────────
+
+    const STORE_PARAMS = {
+      wholefoods: 'almBrandId=VUZHIFdob2xlIEZvb2Rz',
+      fresh: 'almBrandId=QW1hem9uIEZyZXNo'
+    };
+
+    function submitCart(store) {
+      const sel = items.filter(i => i.checked && i.store === store);
+      if (!sel.length) return;
+
+      const encoded = sel.map(i => `${i.asin}:${i.quantity}:${i.store || 'wholefoods'}`).join(',');
+      const unnamed = items.filter(i => i.name === i.asin || !i.image).map(i => i.asin);
+      const hash = `mlab-groceries=${encoded}` + (unnamed.length ? `&mlab-names=${unnamed.join(',')}` : '');
+      const url = `https://www.amazon.com/#${hash}`;
+
+      window.open(url, '_blank');
+      toast(`Opened Amazon — click your bookmark!`, 4000);
+    }
+
+    function fetchNames() {
+      const needsInfo = items.filter(i => i.name === i.asin || !i.image);
+      if (!needsInfo.length) { toast('All items up to date'); return; }
+
+      const url = `https://www.amazon.com/#mlab-names=${needsInfo.map(i => i.asin).join(',')}`;
+      window.open(url, '_blank');
+      toast('Opened Amazon — click your "Add Groceries" bookmark!', 4000);
+    }
+
+    function receiveNames(data) {
+      if (!data) return;
+      let updated = 0;
+      if (data.names) {
+        for (const [asin, name] of Object.entries(data.names)) {
+          const item = items.find(i => i.asin === asin);
+          if (item && name) { item.name = name; updated++; }
+        }
+      }
+      if (data.images) {
+        for (const [asin, url] of Object.entries(data.images)) {
+          const item = items.find(i => i.asin === asin && !i.image);
+          if (item && url) { item.image = url; updated++; }
+        }
+      }
+      if (updated) { save(); render(); toast(`Updated ${updated} item${updated !== 1 ? 's' : ''}`); }
+    }
+
+    function buildBookmarklet() {
+      const code = `void(async function(){` +
+        // Order import mode: scrape ASINs from the current page
+        `if(location.hash.indexOf('mlab-import')>=0||location.href.indexOf('mlab-import')>=0){` +
+          `var links=document.querySelectorAll('a[href*="/dp/"],a[href*="/gp/product/"]');` +
+          `var found={};` +
+          `links.forEach(function(a){` +
+            `var m=a.href.match(/[/](?:dp|gp[/]product)[/]([A-Z0-9]{10})/i);` +
+            `if(m&&!found[m[1].toUpperCase()]){` +
+              `var asin=m[1].toUpperCase();` +
+              `var name=a.textContent.trim().substring(0,120)||asin;` +
+              `if(name.length<3||/^(shop|buy|view|see)/i.test(name))name=asin;` +
+              `var img=a.closest('tr,div,[class*=item],[class*=order]');` +
+              `var imgEl=img&&img.querySelector('img[src*=media-amazon]');` +
+              `found[asin]={name:name,image:imgEl?imgEl.src:''};` +
+            `}` +
+          `});` +
+          `var items=Object.entries(found).map(function(e){return{asin:e[0],name:e[1].name,image:e[1].image}});` +
+          `if(items.length){` +
+            `try{window.opener.postMessage({type:'mlab-import',items:items},'*')}catch(e){}` +
+            `alert('Found '+items.length+' item(s). They have been sent to your grocery list.');` +
+          `}else{alert('No products found on this page.')}` +
+          `return;` +
+        `}` +
+        // Parse cart items and name-only items from hash
+        `var h=location.hash;` +
+        `var cm=h.match(/mlab-groceries=([^&]+)/);` +
+        `var nm=h.match(/mlab-names=([^&]+)/);` +
+        `var ct=cm?decodeURIComponent(cm[1]):'';` +
+        `var nt=nm?decodeURIComponent(nm[1]):'';` +
+        `if(!ct&&!nt){ct=prompt('Paste ASIN:QTY list (comma-separated):')||''}` +
+        `var storeParams={wholefoods:'almBrandId=VUZHIFdob2xlIEZvb2Rz',fresh:'almBrandId=QW1hem9uIEZyZXNo'};` +
+        `var cartItems=ct?ct.split(',').map(function(s){var p=s.trim().split(':');return{a:p[0],q:parseInt(p[1])||1,store:p[2]||'wholefoods'}}).filter(function(i){return/^[A-Z0-9]{10}$/i.test(i.a)}):[];` +
+        `var nameAsins=nt?nt.split(',').filter(function(a){return/^[A-Z0-9]{10}$/i.test(a.trim())}).map(function(a){return a.trim()}):[];` +
+        `if(!cartItems.length&&!nameAsins.length){alert('No valid ASINs found.');return}` +
+        // Progress bar
+        `var bar=document.createElement('div');` +
+        `bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#232f3e;color:#fff;padding:14px 20px;font:15px/1.4 -apple-system,sans-serif;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)';` +
+        `document.body.appendChild(bar);` +
+        `var names={},images={};` +
+        `var allNameAsins=nameAsins.slice();` +
+        `cartItems.forEach(function(it){if(allNameAsins.indexOf(it.a)<0)allNameAsins.push(it.a)});` +
+        `if(allNameAsins.length){` +
+          `async function fetchInfo(asin){` +
+            `try{` +
+              `var r=await fetch('/dp/'+asin,{credentials:'include'});` +
+              `if(!r.ok)return;` +
+              `var txt=await r.text();` +
+              `var m=txt.match(/<title[^>]*>([^<]+)/i);` +
+              `if(m){var pn=m[1].replace(/\\s*[:\\-|]+\\s*Amazon\\.com.*$/i,'').replace(/^Amazon\\.com\\s*[:\\-|]+\\s*/i,'').trim();if(pn&&pn.length>2)names[asin]=pn}` +
+              `var im=txt.match(/og:image[^>]*content=["']([^"']+)/i)||txt.match(/data-a-dynamic-image=["'][{]"([^"]+)/i)||txt.match(/"hiRes":"([^"]+)"/i)||txt.match(/"large":"([^"]+)"/i)||txt.match(/id=["']landingImage["'][^>]*src=["']([^"']+)/i)||txt.match(/data-old-hires=["']([^"']+)/i);` +
+              `if(im&&im[1])images[asin]=im[1];` +
+            `}catch(e){}` +
+          `}` +
+          `for(var j=0;j<allNameAsins.length;j+=4){` +
+            `bar.textContent='Fetching info '+(Math.min(j+4,allNameAsins.length))+'/'+allNameAsins.length+'...';` +
+            `await Promise.all(allNameAsins.slice(j,j+4).map(fetchInfo));` +
+          `}` +
+          `try{if(window.opener)window.opener.postMessage({type:'mlab-names',names:names,images:images},'*')}catch(e){}` +
+        `}` +
+        // Add cart items
+        `var n=cartItems.length,ok=0,diag=[];` +
+        `if(n){` +
+          `function dpUrl(it){var sp=storeParams[it.store];return'/dp/'+it.a+(sp?'?'+sp+'&fpw=alm':'')}` +
+          `var w=window.open(dpUrl(cartItems[0]),'mlab-shop');` +
+          `if(!w){bar.textContent='Please allow popups for Amazon.';return}` +
+          `var btnSel='[id^=\"add-to-cart-button\"],[name=\"submit.add-to-cart\"],input[name=\"submit.addToCart\"],[data-action=\"fresh-add-to-cart\"] input[type=\"submit\"],[id*=\"freshAddToCart\"] input,#grocery\\\\.buybox\\\\.addToCart input[type=\"submit\"]';` +
+          `var limitRe=/limit|maximum|exceed|can.t add|cannot add|restricted|not available in the requested quantity/i;` +
+          `var limitSel='.a-alert-content,.a-box-alert,#huc-v2-order-row-messages,.a-alert.a-alert-error,.a-popover-modal .a-box-inner,#percolate-ui-ilm_div,[class*=\"qs-widget\"] .a-alert,.qs-widget-error';` +
+          `function waitFor(fn,ms){return new Promise(function(resolve){var t=0;var p=setInterval(function(){t+=200;if(w.closed){clearInterval(p);resolve(null);return}try{var r=fn();if(r){clearInterval(p);resolve(r)}}catch(e){}if(t>=ms){clearInterval(p);resolve(null)}},200)})}` +
+          `function getDoc(){try{return w.document}catch(e){return null}}` +
+          `function getItemName(asin){try{var d=getDoc();if(d){var t=d.title.replace(/Amazon\\.com[^]*/i,'').replace(/[:\\-|]+\\s*$/,'').trim();if(t)return t}}catch(e){}return asin}` +
+          `function checkLimit(d){try{var al=d.querySelectorAll(limitSel);for(var k=0;k<al.length;k++){if(limitRe.test(al[k].textContent))return al[k].textContent.trim().substring(0,120)}}catch(e){}return null}` +
+          // Wait for navigation to invalidate the old page
+          `async function waitForNewPage(){` +
+            // Wait for document to become inaccessible (navigation started) then accessible again (new page loaded)
+            `var oldTitle='';try{oldTitle=w.document.title}catch(e){}` +
+            `await new Promise(function(r){setTimeout(r,500)});` +
+            // Now wait for document to become accessible with a different title or fresh content
+            `await waitFor(function(){var d=getDoc();if(!d)return false;try{if(d.readyState==='loading')return false}catch(e){}return true},10000);` +
+          `}` +
+          // Set quantity via the Fresh/WF qs-widget dropdown
+          `async function setQsQty(d,qty){` +
+            `try{` +
+              `var qsBtn=d.querySelector('[id*=\"qs-widget-button\"][id*=\"announce\"]');` +
+              `if(!qsBtn)return false;` +
+              `qsBtn.click();` +
+              `var ul=null,opts=null;` +
+              `for(var wt=0;wt<10;wt++){` +
+                `await new Promise(function(r){setTimeout(r,200)});` +
+                `ul=d.querySelector('[id*=\"qs-widget-dropdown-unorderedlist\"]');` +
+                `if(ul){opts=ul.querySelectorAll('li[role=\"option\"],li');if(opts.length)break}` +
+              `}` +
+              `if(!opts||!opts.length){try{qsBtn.click()}catch(e){}return false}` +
+              `var matched=false;` +
+              `for(var o=0;o<opts.length;o++){` +
+                `var optText=opts[o].textContent.trim();` +
+                `if(optText===String(qty)||(qty>=10&&/10\\+/.test(optText))){` +
+                  `opts[o].click();matched=true;break` +
+                `}` +
+              `}` +
+              `if(!matched){try{qsBtn.click()}catch(e){}return false}` +
+              `await new Promise(function(r){setTimeout(r,400)});` +
+              `if(qty>=10){` +
+                `var ti=d.querySelector('input.qs-widget-text-input');` +
+                `if(ti){` +
+                  `ti.value=String(qty);` +
+                  `ti.dispatchEvent(new w.Event('input',{bubbles:true}));` +
+                  `ti.dispatchEvent(new w.Event('change',{bubbles:true}));` +
+                  `await new Promise(function(r){setTimeout(r,200)});` +
+                  `var upd=d.querySelector('[id*=\"qs-widget-text-input-updatelink\"] button');` +
+                  `if(upd){upd.click();await new Promise(function(r){setTimeout(r,500)})}` +
+                `}` +
+              `}` +
+              `return true;` +
+            `}catch(e){return false}` +
+          `}` +
+          `for(var i=0;i<n;i++){` +
+            `bar.textContent='Adding '+(i+1)+'/'+n+'...';` +
+            // Navigate popup, re-open if closed
+            `try{` +
+              `if(w.closed){w=window.open(dpUrl(cartItems[i]),'mlab-shop');if(!w){diag.push(cartItems[i].a+': popup blocked');continue}}` +
+              `else if(i>0){w.location=dpUrl(cartItems[i])}` +
+            `}catch(e){try{w=window.open(dpUrl(cartItems[i]),'mlab-shop')}catch(e2){diag.push(cartItems[i].a+': popup error');continue}}` +
+            // Wait for navigation to complete (prevents clicking stale page buttons)
+            `if(i>0)await waitForNewPage();` +
+            // Wait for ATC button or unavailable message
+            `var btn=await waitFor(function(){var d=getDoc();if(!d)return false;` +
+              `var ua=d.querySelector('#availability,.a-text-center .a-size-base-plus.a-text-bold');if(ua&&/currently unavailable/i.test(ua.textContent))return'unavail';` +
+              `return d.querySelector(btnSel)},12000);` +
+            `if(btn==='unavail'){diag.push(getItemName(cartItems[i].a)+': unavailable');continue}` +
+            `if(!btn){diag.push(cartItems[i].a+': page failed to load');continue}` +
+            `var d=getDoc();` +
+            `if(!d){diag.push(cartItems[i].a+': lost popup window');continue}` +
+            `var qty=cartItems[i].q;` +
+            `var itemOk=true;` +
+            // Try to set quantity before clicking ATC (avoids unreliable multi-click)
+            `var qtySet=false;` +
+            `var qtyIn=d.querySelector('[name=\"quantity\"]')||d.querySelector('#quantity');` +
+            `if(qtyIn){qtyIn.value=String(qty);qtyIn.dispatchEvent(new w.Event('change',{bubbles:true}));qtySet=true}` +
+            `if(!qtySet&&qty>1){qtySet=await setQsQty(d,qty)}` +
+            `var clicks=qtySet?1:qty;` +
+            `for(var c=0;c<clicks;c++){` +
+              `d=getDoc();if(!d){diag.push(getItemName(cartItems[i].a)+': lost window mid-add');itemOk=false;break}` +
+              `var cc0='';try{var cce=d.querySelector('#nav-cart-count');cc0=cce?cce.textContent.trim():''}catch(e){}` +
+              `var curBtn=d.querySelector(btnSel);` +
+              `if(!curBtn){if(c>0)break;diag.push(getItemName(cartItems[i].a)+': button disappeared');itemOk=false;break}` +
+              `curBtn.click();` +
+              // Wait for cart count change or limit/error
+              `var wr=await waitFor(function(){` +
+                `var dd=getDoc();if(!dd)return'lost';` +
+                `var lm=checkLimit(dd);if(lm)return'limit:'+lm;` +
+                `try{var cce2=dd.querySelector('#nav-cart-count');if(cce2&&cce2.textContent.trim()!==cc0)return true}catch(e){}` +
+                `return false` +
+              `},6000);` +
+              `if(wr==='lost'){diag.push(getItemName(cartItems[i].a)+': lost window');itemOk=false;break}` +
+              `if(typeof wr==='string'&&wr.indexOf('limit:')===0){diag.push(getItemName(cartItems[i].a)+': '+wr.substring(6));itemOk=false;break}` +
+              // If cart count didn't change, still continue (Fresh AJAX may have succeeded without visible count update)
+              `if(!wr&&clicks>1&&c<clicks-1){` +
+                `try{w.location=dpUrl(cartItems[i])}catch(e){}` +
+                `await waitForNewPage();` +
+                `var rb=await waitFor(function(){var dd=getDoc();return dd&&dd.querySelector(btnSel)},10000);` +
+                `if(!rb){diag.push(getItemName(cartItems[i].a)+': reload failed after click '+(c+1));itemOk=false;break}` +
+              `}` +
+            `}` +
+            `if(itemOk)ok++;` +
+            `bar.textContent=(i+1)+'/'+n+' done ('+ok+' added)';` +
+          `}` +
+          `try{w.close()}catch(e){}` +
+        `}` +
+        // Results — always go to WF cart, show diagnostics as alert first
+        `var wfCart='https://www.amazon.com/cart/localmarket?ref_=ox_mcp_alm_wf_gtc_dsk_us&almBrandId=VUZHIFdob2xlIEZvb2Rz';` +
+        `if(n&&diag.length){` +
+          `bar.style.background='#c0956c';` +
+          `bar.innerHTML='<b>Added '+ok+'/'+n+'</b>. Opening cart...';` +
+          `alert('Added '+ok+'/'+n+' items.\\n\\nWarnings:\\n\\n'+diag.join('\\n\\n'));` +
+          `location.href=wfCart;` +
+        `}else if(n){` +
+          `bar.innerHTML='<b>Done!</b> Added all '+n+' items. Opening cart...';` +
+          `bar.style.background='#2d6a4f';` +
+          `setTimeout(function(){location.href=wfCart},1000)` +
+        `}else{` +
+          `bar.innerHTML='<b>Done!</b> Named '+Object.keys(names).length+' items. Closing...';` +
+          `bar.style.background='#2d6a4f';` +
+          `setTimeout(function(){bar.remove();location.hash='';window.close()},2000)` +
+        `}` +
+      `})()`;
+      return 'javascript:' + code;
+    }
+
+    // ── Import / Export ───────────────────────
+
+    async function saveJSON() {
+      if (!items.length) { toast('Nothing to save'); return; }
+      const data = {
+        name: "M'lab Groceries",
+        exported: new Date().toISOString(),
+        items: items.map(({ asin, name, quantity, store, staple }) => ({ asin, name, quantity, store, staple: staple || undefined }))
+      };
+      try {
+        const resp = await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data, null, 2) });
+        if (resp.ok) { toast('Saved!'); return; }
+      } catch {}
+      toast('Save failed — is the server running? (node server.js)');
+    }
+
+    // ── Toast ─────────────────────────────────
+
+    let toastTimer;
+    function toast(msg, ms = 2500) {
+      $toast.textContent = msg;
+      $toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => $toast.classList.remove('show'), ms);
+    }
+
+    // ── Render ────────────────────────────────
+
+    function renderCard(item) {
+      return `
+        <div class="item-card ${item.checked ? 'selected' : ''} ${item.staple ? 'staple' : ''}" data-id="${item.id}">
+          <span class="chk">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} data-toggle="${item.id}">
+            <span class="chk-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </span>
+          <img class="item-thumb" src="${item.image || 'https://m.media-amazon.com/images/P/' + item.asin + '._AC_US100_.jpg'}" alt="" data-stop>
+          <div class="item-body" data-card-toggle="${item.id}">
+            <div class="item-name ${item.name === item.asin ? 'unnamed' : ''}" contenteditable="true" data-name-id="${item.id}" spellcheck="false" ${item.name === item.asin ? 'data-placeholder="Click to name this item"' : ''}>${esc(item.name === item.asin ? '' : item.name)}</div>
+            <div class="item-meta">
+              <span class="item-asin">${item.asin}</span>
+              <a href="https://www.amazon.com/dp/${item.asin}" target="_blank" rel="noopener" class="item-link" data-stop>
+                View
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="staple-btn ${item.staple ? 'active' : ''}" data-staple="${item.id}" title="Mark as staple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="${item.staple ? 'var(--accent)' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </button>
+            <div class="qty">
+              <button data-qty-down="${item.id}">&#8722;</button>
+              <span>${item.quantity}</span>
+              <button data-qty-up="${item.id}">+</button>
+            </div>
+            <button class="del-btn" data-del="${item.id}" title="Remove">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      const hasItems = items.length > 0;
+      const selectedCount = items.filter(i => i.checked).length;
+
+      $empty.classList.toggle('visible', !hasItems);
+      $toolbar.style.display = hasItems ? 'flex' : 'none';
+      $cartBar.classList.toggle('visible', selectedCount > 0);
+
+      $countEl.textContent = hasItems
+        ? `${items.length} item${items.length !== 1 ? 's' : ''}`
+        : '';
+
+      $selectAll.checked = hasItems && items.every(i => i.checked);
+
+      // Group by store
+      const groups = {};
+      for (const item of items) {
+        const s = item.store || 'fresh';
+        (groups[s] = groups[s] || []).push(item);
+      }
+
+      const storeKeys = Object.keys(groups);
+      const multiStore = storeKeys.length > 1;
+
+      let html = '';
+      for (const store of storeKeys) {
+        const storeItems = groups[store].slice().sort((a, b) => {
+          if (a.staple !== b.staple) return a.staple ? -1 : 1;
+          const anamed = a.name !== a.asin, bnamed = b.name !== b.asin;
+          if (anamed !== bnamed) return anamed ? -1 : 1;
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        });
+        if (multiStore) {
+          html += `<div class="store-section"><h3>${esc(STORES[store] || store)}</h3><span class="store-count">${storeItems.length}</span></div>`;
+        }
+        html += storeItems.map(renderCard).join('');
+      }
+      $list.innerHTML = html;
+
+      $list.querySelectorAll('.item-thumb').forEach(img => {
+        const hide = () => { img.style.display = 'none'; };
+        if (img.complete) { if (img.naturalWidth < 10) hide(); }
+        else { img.onload = function() { if (this.naturalWidth < 10) hide(); }; img.onerror = hide; }
+      });
+
+      // Cart buttons — one per store that has checked items
+      let cartHtml = '';
+      for (const store of storeKeys) {
+        const checked = groups[store].filter(i => i.checked);
+        if (checked.length) {
+          cartHtml += `<button class="cart-btn" data-cart-store="${store}">Add ${checked.length} ${STORES[store] || store} item${checked.length !== 1 ? 's' : ''} to Cart</button>`;
+        }
+      }
+      $cartBar.innerHTML = cartHtml;
+    }
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ── Events ────────────────────────────────
+
+    function setup() {
+      const input = document.getElementById('addInput');
+      const addBtn = document.getElementById('addBtn');
+
+      function doAdd() {
+        const val = input.value.trim();
+        if (!val) return;
+        if (isOrderURL(val)) {
+          importFromOrder(val);
+          input.value = '';
+          input.classList.remove('valid', 'invalid');
+          return;
+        }
+        const result = addItem(val);
+        if (result === 'ok') {
+          input.value = '';
+          input.classList.remove('valid', 'invalid');
+          toast('Added!');
+        } else if (result === 'invalid') {
+          input.classList.add('shake');
+          setTimeout(() => input.classList.remove('shake'), 400);
+          toast('Not a valid Amazon link or ASIN');
+        } else if (result.duplicate) {
+          input.value = '';
+          input.classList.remove('valid', 'invalid');
+          const card = document.querySelector(`[data-id="${result.duplicate}"]`);
+          if (card) {
+            card.classList.add('duplicate-flash');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => card.classList.remove('duplicate-flash'), 700);
+          }
+          toast('Already on your list');
+        }
+      }
+
+      addBtn.addEventListener('click', doAdd);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+
+      input.addEventListener('input', () => {
+        const v = input.value.trim();
+        if (!v) { input.classList.remove('valid', 'invalid'); return; }
+        const valid = extractASIN(v) || isOrderURL(v);
+        input.classList.toggle('valid', !!valid);
+        input.classList.toggle('invalid', !valid && v.length > 3);
+      });
+
+      input.addEventListener('paste', () => {
+        setTimeout(() => {
+          const v = input.value.trim();
+          if (v && (extractASIN(v) || isOrderURL(v))) doAdd();
+        }, 0);
+      });
+
+      document.getElementById('selectAll').addEventListener('change', e => {
+        toggleAll(e.target.checked);
+      });
+
+      document.getElementById('cartBar').addEventListener('click', e => {
+        const btn = e.target.closest('[data-cart-store]');
+        if (btn) submitCart(btn.dataset.cartStore);
+      });
+
+      document.getElementById('saveBtn').addEventListener('click', saveJSON);
+      document.getElementById('fetchNamesBtn').addEventListener('click', fetchNames);
+      document.getElementById('selectStarred').addEventListener('click', () => {
+        const allStarredChecked = items.filter(i => i.staple).every(i => i.checked);
+        if (allStarredChecked) {
+          items.forEach(i => i.checked = false);
+        } else {
+          items.forEach(i => i.checked = !!i.staple);
+        }
+        save();
+        render();
+      });
+
+      document.getElementById('itemList').addEventListener('click', e => {
+        const t = e.target;
+        if (t.closest('[data-stop]') || t.closest('.item-name')) return;
+
+        const staple = t.closest('[data-staple]');
+        if (staple) { e.stopPropagation(); toggleStaple(staple.dataset.staple); return; }
+
+        const toggle = t.closest('[data-toggle]');
+        if (toggle) { toggleItem(toggle.dataset.toggle); return; }
+
+        const cardToggle = t.closest('[data-card-toggle]');
+        if (cardToggle) { toggleItem(cardToggle.dataset.cardToggle); return; }
+
+        const qUp = t.closest('[data-qty-up]');
+        if (qUp) { e.stopPropagation(); setQuantity(qUp.dataset.qtyUp, 1); return; }
+
+        const qDown = t.closest('[data-qty-down]');
+        if (qDown) { e.stopPropagation(); setQuantity(qDown.dataset.qtyDown, -1); return; }
+
+        const del = t.closest('[data-del]');
+        if (del) { e.stopPropagation(); removeItem(del.dataset.del); return; }
+      });
+
+      document.getElementById('itemList').addEventListener('blur', e => {
+        const nameEl = e.target.closest('[data-name-id]');
+        if (nameEl) setName(nameEl.dataset.nameId, nameEl.textContent);
+      }, true);
+
+      document.getElementById('itemList').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.target.closest('[data-name-id]')) {
+          e.preventDefault();
+          e.target.blur();
+        }
+      });
+    }
+
+    // ── Init ──────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+      $list = document.getElementById('itemList');
+      $empty = document.getElementById('emptyState');
+      $toolbar = document.getElementById('toolbar');
+      $cartBar = document.getElementById('cartBar');
+      $selectAll = document.getElementById('selectAll');
+      $countEl = document.getElementById('itemCount');
+      $toast = document.getElementById('toast');
+
+      window.addEventListener('message', e => {
+        if (e.data && e.data.type === 'mlab-names') receiveNames(e.data);
+        if (e.data && e.data.type === 'mlab-import') receiveImport(e.data);
+      });
+
+      items = load();
+      if (!items.length) {
+        fetch('/groceries.json').then(r => r.ok ? r.json() : null).then(data => {
+          if (!data) return;
+          const list = Array.isArray(data) ? data : (data.items || []);
+          list.forEach(entry => {
+            const asin = (entry.asin || '').toUpperCase();
+            if (asin.length === 10 && !items.some(i => i.asin === asin)) {
+              items.push({ id: uid(), asin, name: entry.name || asin, quantity: entry.quantity || 1, checked: false, store: entry.store || 'fresh', staple: entry.staple || false, image: entry.image || '' });
+            }
+          });
+          if (items.length) { save(); render(); }
+        }).catch(() => {});
+      }
+      render();
+      setup();
+
+      document.getElementById('bookmarkletLink').href = buildBookmarklet();
+
+      document.getElementById('setupDismiss').addEventListener('click', () => {
+        document.getElementById('setupBanner').style.display = 'none';
+        localStorage.setItem('mlab-setup-dismissed', '1');
+      });
+    });
+  </script>
+</body>
+</html>
